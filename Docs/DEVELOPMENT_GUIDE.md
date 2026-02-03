@@ -1,11 +1,17 @@
-# Office Robot Service - 개발 가이드
+# Office Robot Service - 개발 가이드 (v2.1)
 
-이 문서는 Office Robot Service 프로젝트의 구조를 이해하고, 다음 개발 단계를 진행하는 데 도움을 주기 위해 작성되었습니다.
-리팩토링을 통해 각 모듈의 역할이 명확해졌고, 중앙화된 DI 컨테이너를 도입하여 유지보수성을 높였습니다.
+이 문서는 'API 우선(API-First)' 개발 전략에 따라, Office Robot Service 프로젝트의 개선된 구조를 이해하고 병렬적인 다음 개발 단계를 진행하는 데 도움을 주기 위해 작성되었습니다.
 
 ---
 
-## 1. 프로젝트 실행 방법
+## 1. 프로젝트 아키텍처 개요
+
+본 프로젝트는 다음과 같은 두 개의 주요 애플리케이션으로 구성된 **모노레포(Monorepo)** 구조를 가집니다.
+
+-   **`server/`**: 메인 서버 애플리케이션. FastAPI로 구현되었으며, 시스템의 두뇌 역할을 하는 컨트롤 타워입니다.
+-   **`robot/`**: 로봇 엣지 애플리케이션. ROS 2 패키지들로 구성되며, 실제 로봇 위에서 구동됩니다.
+
+## 2. 메인 서버 실행 방법 (`server/`)
 
 ### 필수 환경
 - Python 3.8+
@@ -22,100 +28,172 @@
   ```
 
 ### 실행
-1.  프로젝트 루트 디렉토리에서 아래 명령어를 실행하여 단일 통합 서버(API + Web UI + Communication)를 시작합니다.
+1.  프로젝트 루트 디렉토리에서 아래 명령어를 실행하여 메인 서버를 시작합니다.
     ```bash
-    uvicorn src.app:app --reload --host 0.0.0.0
-    ```
+    uvicorn server.app:app --reload --host 0.0.0.0
+  ```
 2.  서버가 시작되면 아래 주소로 접속하여 각 기능을 확인할 수 있습니다.
     - **관리자 대시보드**: `http://127.0.0.1:8000/web/admin`
     - **직원용 앱**: `http://127.0.0.1:8000/web/employee`
     - **API 문서 (Swagger UI)**: `http://127.0.0.1:8000/docs`
 
 ### 실행 순서 (Startup Flow)
-1.  `src/app.py`가 실행됩니다.
+1.  `server/app.py`가 실행됩니다.
 2.  FastAPI `startup_event`가 트리거됩니다.
     1.  데이터베이스 연결 풀을 생성합니다.
-    2.  `src/container.py`를 통해 모든 서비스를 싱글턴으로 생성하고 의존성을 주입합니다.
-    3.  TCP 및 UDP 통신 서버를 백그라운드 태스크로 실행합니다.
+    2.  `server/container.py`를 통해 모든 서비스를 싱글턴으로 생성하고 의존성을 주입합니다.
+    3.  **(TODO)** 로봇과의 통신을 담당할 `ROSBridge`와 `VideoStreamReceiver`가 백그라운드 태스크로 실행될 예정입니다. (현재는 비활성화)
 3.  API와 웹 UI 요청을 처리할 준비가 완료됩니다.
 
 ---
 
-## 2. 주요 코드 파일 설명
+## 3. 디렉토리 및 주요 코드 설명
 
-### `src/`
--   `app.py`: FastAPI 애플리케이션의 메인 진입점. 서버 시작/종료, 라우터 등록, 정적 파일 마운트를 관리합니다.
--   `container.py`: **(중요)** 의존성 주입(DI) 컨테이너. 애플리케이션의 모든 핵심 서비스를 생성하고 관리하는 중앙 허브입니다.
--   `web_routes.py`: **(UI)** Jinja2 템플릿을 사용하여 HTML 웹 페이지(관리자 대시보드, 직원 앱)를 렌더링하는 라우터.
+### `robot/`
+-   `src/`: 로봇에서 실행될 ROS 2 패키지들이 위치합니다.
+    -   `navigation_node`: 자율 주행 및 경로 계획 담당.
+    -   `perception_node`: 센서 데이터 기반 장애물 인식 담당.
+    -   `communication_node`: 메인 서버와의 통신 담당.
 
-### `src/api/v1/`
--   `admin_routes.py`: 관리자용 REST API 엔드포인트.
--   `employee_routes.py`: 직원용 REST API 엔드포인트.
-
-### `src/core_layer/`
--   **`fleet_management/fleet_manager.py`**: **(핵심 로직)** 로봇 군집(Fleet) 관리 시스템. 최적 로봇 배차, 작업 명령 시퀀스 생성, 로봇 상태 업데이트를 담당합니다.
--   **`task_management/task_manager.py`**: **(핵심 로직)** 작업 관리 시스템. 사용자 요청을 받아 작업을 생성하고, `FleetManager`와 연동하여 로봇에 작업을 할당합니다.
--   `ai_inference/inference_service.py`: AI 추론 서비스. 로봇의 카메라로부터 받은 이미지로 객체/얼굴 인식을 수행합니다 (현재 Mock).
--   `office_iot/iot_controller.py`: 사무실 IoT 장비(조명, 온도 등)를 제어하는 서비스입니다 (현재 Mock).
-
-### `src/domains/`
--   `robots/robot.py`: `Robot` 데이터 모델(Pydantic) 및 상태(Enum) 정의.
--   `robots/robot_repository.py`: `Robot` 데이터에 접근하기 위한 리포지토리 인터페이스(Protocol).
--   `tasks/task.py`: `Task` 데이터 모델 및 상태/타입(Enum) 정의.
--   `tasks/task_repository.py`: `Task` 데이터에 접근하기 위한 리포지토리 인터페이스(Protocol).
-
-### `src/infrastructure/`
--   `database/`: 데이터베이스 연결 및 실제 Repository 구현체.
-    -   `connection.py`: `asyncio` 기반 DB 연결 관리.
-    -   `repositories/mysql_robot_repository.py`: `IRobotRepository`의 MySQL 구현체.
-    -   `repositories/mysql_task_repository.py`: `ITaskRepository`의 MySQL 구현체.
--   `communication/`: 로봇과의 통신 인프라.
-    -   `protocols.py`: 로봇 통신 인터페이스(`IRobotCommunicator`) 정의.
-    -   `robot_communicator.py`: `IRobotCommunicator`의 Mock 구현체. **(실제 통신 로직 구현 필요)**
-    -   `tcp_server.py`: 로봇의 상태 보고 및 명령 하달을 위한 TCP 서버.
-    -   `udp_server.py`: 로봇의 영상 스트림 수신을 위한 UDP 서버.
+### `server/`
+-   `app.py`: FastAPI 애플리케이션의 메인 진입점.
+-   `container.py`: **(중요)** 의존성 주입(DI) 컨테이너. 애플리케이션의 모든 핵심 서비스를 관리하는 중앙 허브.
+-   `web/`: 웹 UI 관련 파일을 그룹화합니다.
+    -   `routes.py`: Jinja2 템플릿을 사용하여 HTML 웹 페이지를 렌더링하는 라우터.
+    -   `static/`: CSS, JS 등 정적 파일.
+    -   `templates/`: HTML 템플릿 파일.
+    -   `connection_manager.py`: WebSocket 연결을 관리하고 클라이언트에게 실시간 데이터를 브로드캐스트하는 모듈.
+-   `api/v1/`: 버전 1의 REST API 엔드포인트.
+    -   `admin_routes.py`, `employee_routes.py`, `guest_routes.py`.
+-   `core_layer/`: 시스템의 핵심 비즈니스 로직.
+    -   `fleet_management/fleet_manager.py`: 로봇 군집 관리 및 배차 담당.
+    -   `task_management/task_manager.py`: 작업 생성 및 할당 담당.
+-   `domains/`: 비즈니스 데이터 모델(Pydantic) 및 리포지토리 인터페이스(Protocol) 정의.
+-   `infrastructure/`: 외부 시스템(DB, 통신 등)과의 연동을 책임지는 구현체.
+    -   `database/`: SQLAlchemy 기반 DB 연결 및 Repository 구현.
+    -   `communication/`: 통신 인프라.
+        -   `ros_bridge.py`: **(제어)** 로봇과의 명령/상태 통신(Control Plane) 담당.
+        -   `video_stream_receiver.py`: **(데이터)** 로봇의 영상 스트림 수신(Data Plane) 담당.
 
 ---
 
-## 3. 다음 구현 단계 (상세 구현 로드맵)
+## 4. API 및 프로토콜 명세 (v1.0)
 
-현재 시스템의 핵심 뼈대는 완성되었지만, 내부 로직은 대부분 Mock 상태이거나 초기 단계입니다. 아래 함수와 알고리즘을 상세히 구현하여 프로젝트를 완성해야 합니다.
+이 명세는 각 팀(로봇, AI, 앱)이 메인 서버와 통신하기 위해 지켜야 할 **개발 계약(Contract)**입니다.
+
+### A. 메인 서버 <-> 로봇 통신
+
+#### 1. 제어 영역 (Control Plane)
+-   **프로토콜**: WebSocket을 사용한 `rosbridge_suite` (TCP 기반)
+-   **메시지 형식**: JSON
+
+##### 서버 -> 로봇: Action Command Sequence
+로봇에게 수행할 행동의 순차 목록을 전달합니다.
+```json
+{
+  "sequence_id": "seq-1672531200",
+  "actions": [
+    {
+      "action_id": "act-001",
+      "type": "GOTO",
+      "params": { "x": 10.5, "y": -2.1, "theta": 1.57 }
+    },
+    {
+      "action_id": "act-002",
+      "type": "PICKUP",
+      "params": { "item_id": "snack-01" }
+    },
+    {
+      "action_id": "act-003",
+      "type": "DISPLAY",
+      "params": { "screen": "follow_me" }
+    }
+  ]
+}
+```
+
+##### 로봇 -> 서버: Robot Status
+로봇이 자신의 상태를 주기적으로 서버에 보고합니다.
+```json
+{
+  "robot_id": "R-01",
+  "battery": 85.5,
+  "status": "IDLE",
+  "pose": { "x": 0.5, "y": 1.2, "theta": 0.0 },
+  "last_action_id": "act-001",
+  "action_status": "COMPLETED"
+}
+```
+
+#### 2. 데이터 영역 (Data Plane)
+-   **대상**: 로봇 -> AI 추론 서버
+-   **프로토콜**: Raw UDP
+-   **데이터 형식**: H.264/MJPEG 인코딩 영상 프레임
+-   **패킷 구조 (예시)**: `[Frame ID (4 bytes)] + [Timestamp (8 bytes)] + [Image Data]`
+
+### B. AI 추론 서버 API
+AI 추론 서버는 다음 REST API 엔드포인트를 구현해야 합니다.
+
+##### `POST /api/v1/inference/object_detection`
+-   **요청 (Request)**:
+    ```json
+    {
+      "request_id": "req-12345",
+      "image_base64": "iVBORw0KGgoAAAANSUhEUgAAAAE..."
+    }
+    ```
+-   **응답 (Response)**:
+    ```json
+    {
+      "request_id": "req-12345",
+      "objects": [
+        {
+          "class_name": "Snack_A",
+          "confidence": 0.98,
+          "bounding_box": [100, 150, 50, 50]
+        }
+      ]
+    }
+    ```
+
+### C. 사용자 앱 <-> 메인 서버 API
+-   **프로토콜**: HTTP/HTTPS (REST API), WebSocket (실시간 업데이트)
+
+##### 1. REST API 명세
+메인 서버 실행 후 `http://<서버_IP>:8000/docs` 에서 제공되는 **Swagger UI 문서를 기준**으로 합니다.
+-   **주요 신규 API**:
+    -   `POST /api/v1/guest/qr/verify`: 게스트의 QR 코드를 검증하고 안내 로봇을 호출합니다.
+
+##### 2. 관리자 앱 실시간 업데이트 (WebSocket)
+-   **엔드포인트**: `ws://<서버_IP>:8000/ws/admin/status`
+-   **메시지 형식**: 서버가 클라이언트에게 `Robot` 객체의 JSON 직렬화 문자열을 푸시합니다.
+    ```json
+    {
+      "id": 1,
+      "name": "R-01",
+      "status": "moving",
+      "battery_level": 90.0,
+      "pose_x": 1.2,
+      "pose_y": 3.4,
+      "current_task_id": 123
+    }
+    ```
+
+---
+
+## 5. 다음 구현 단계 (상세 구현 로드맵)
 
 ### **1. 최적 로봇 배차 알고리즘 구체화 (Priority: 높음)**
--   **파일:** `src/core_layer/fleet_management/fleet_manager.py`
+-   **파일:** `server/core_layer/fleet_management/fleet_manager.py`
 -   **함수:** `find_optimal_robot(self, target_pose: tuple)`
--   **현재 상태:** IDLE 상태이고 배터리가 20% 이상인 로봇 중, 유클리드 거리(`L2-norm`)만 계산하여 가장 가까운 로봇을 선택.
--   **구현할 내용:**
-    -   **경로 거리 계산:** 현재 위치에서 목적지까지의 실제 경로 거리를 계산하는 로직 추가 필요. (단순 직선 거리가 아닌, 지도 기반의 A* 또는 Dijkstra 알고리즘 적용 고려)
-    -   **작업 우선순위 반영:** `Task`의 우선순위(`details`에 포함)를 점수 계산에 반영. (예: 긴급 > 일반)
-    -   **로봇 상태 가중치:** 로봇의 현재 작업 큐 길이, 에러 상태 여부 등을 점수에 반영.
-    -   **최종 점수(Score) 계산:** `Score = w1 * (경로 거리) + w2 * (배터리 패널티) + w3 * (우선순위 보너스)` 와 같은 종합 점수 모델 설계.
+-   **구현할 내용:** 단순 직선 거리가 아닌, 실제 지도 기반 경로 거리, 작업 우선순위, 로봇 상태 가중치를 포함하는 종합 점수 모델을 설계하여 최적의 로봇을 선택하도록 알고리즘을 고도화합니다.
 
 ### **2. 실제 로봇 통신 로직 구현 (Priority: 높음)**
--   **파일:** `src/infrastructure/communication/robot_communicator.py`
--   **클래스:** `MockRobotCommunicator`를 `RealRobotCommunicator` (가칭)로 교체 또는 수정.
--   **현재 상태:** 로봇에게 보낼 명령(JSON)을 콘솔에 출력만 하는 Mock 클래스.
--   **구현할 내용:**
-    -   `__init__`: 실제 로봇과의 통신 채널(TCP 소켓, MQTT 클라이언트 등)을 초기화.
-    -   `send_action_sequence`: 직렬화된 JSON 메시지를 실제 통신 채널을 통해 로봇에게 **전송(send)**.
--   **파일:** `src/infrastructure/communication/tcp_server.py`
-    -   `handle_robot_client`: 로봇이 보내는 상태 보고(JSON)를 수신하면, 이를 파싱하여 `container.fleet_manager.update_robot_status`를 호출하도록 로직 추가. (주석 처리된 부분 활성화)
+-   **파일:** `server/infrastructure/communication/ros_bridge.py`
+-   **클래스:** `MockRobotCommunicator`를 실제 `rosbridge_suite`와 연동하는 `RealRobotCommunicator` (가칭)로 교체합니다. 서버가 로봇의 상태 보고를 수신하고, 행동 명령 시퀀스를 전송하는 로직을 구현합니다.
 
 ### **3. AI 추론 서비스 연동 (Priority: 중간)**
--   **파일:** `src/core_layer/ai_inference/inference_service.py`
--   **함수:** `request_object_detection`, `request_face_recognition`
--   **현재 상태:** `asyncio.sleep`으로 대기 후, 정해진 Mock 데이터를 반환.
--   **구현할 내용:**
-    -   실제 GPU 추론 서버가 있다면, `httpx` 같은 HTTP 클라이언트를 사용하여 이미지 데이터(`image_data`)를 해당 서버의 API로 POST 요청을 보내고, 그 결과를 받아 반환하는 로직 구현.
-    -   경량 모델(TFLite 등)을 엣지에서 직접 돌릴 경우, 해당 모델을 로드하고 추론하는 코드를 이 함수 내에 작성.
--   **파일:** `src/infrastructure/communication/udp_server.py`
-    -   `datagram_received`: 수신한 UDP 패킷(`data`)을 `ai_service`의 추론 함수로 넘겨주는 `asyncio.create_task` 부분의 주석을 해제하고 실제 호출.
-
-### **4. 교착 상태(Deadlock) 회피/해결 로직 (Priority: 낮음)**
--   **파일:** `src/core_layer/fleet_management/fleet_manager.py`
--   **함수:** (신규 생성 필요) `resolve_traffic_conflict` 등
--   **현재 상태:** 미구현.
--   **구현할 내용:**
-    -   주기적으로 모든 로봇의 경로를 확인하여, 경로가 겹치거나 충돌 위험이 있는지 감지하는 로직.
-    -   충돌 감지 시, 작업 우선순위가 낮은 로봇에게 `PAUSE` 또는 `RE-PATH(임시 대기 장소)` 명령을 `IRobotCommunicator`를 통해 전송하는 기능 구현.
-    -   `SR-013` 문서의 우선순위 (가이드 > 물품 > 간식)를 참고하여 정책 수립.
+-   **파일:** `server/core_layer/ai_inference/inference_service.py`
+-   **구현할 내용:** 현재 Mock 상태인 AI 서비스를, 실제 AI 추론 서버의 REST API (`B. AI 추론 서버 API` 명세 참고)를 호출하는 HTTP 클라이언트로 구현합니다.
+-   **파일:** `server/infrastructure/communication/video_stream_receiver.py`
+    -   AI 서버가 아닌 메인 서버에서 UDP 스트림을 받는다면, 수신한 데이터를 `AIInferenceService`로 전달하는 로직을 활성화합니다. (이상적으로는 이 로직은 AI 서버에 있어야 합니다.)
