@@ -1,0 +1,101 @@
+import asyncio
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
+
+# --- DI 컨테이너 및 서비스 초기화 ---
+from server.container import container
+from server.infrastructure.database.connection import Database
+from server.web.connection_manager import manager as connection_manager
+# TODO: 아래 주석 처리된 라인은 향후 ROS 브리지와 영상 스트림 수신기 구현 시 활성화됩니다.
+# from server.infrastructure.communication.ros_bridge import ROSBridge
+# from server.infrastructure.communication.video_stream_receiver import start_video_stream_receiver
+
+# .env 파일에서 환경 변수 로드
+load_dotenv()
+
+# 전역 변수로 백그라운드 태스크 저장
+background_tasks = set()
+
+# --- FastAPI 애플리케이션 설정 ---
+async def startup_event():
+    """애플리케이션 시작 시 모든 서비스를 초기화하고 백그라운드 서버를 가동합니다."""
+    # 1. 데이터베이스 연결 풀 생성
+    await Database.initialize()
+    print("Database pool initialized.")
+    
+    # 2. DI 컨테이너 초기화 (서비스, 리포지토리 등)
+    container.services()
+    print("DI container and services initialized.")
+
+    # 3. TODO: 통신 서버(ROS 브리지, 영상 수신기)를 백그라운드 태스크로 시작
+    # 예시:
+    # ros_bridge = ROSBridge(host='0.0.0.0', port=9090, fleet_manager=container.fleet_manager)
+    # bridge_task = asyncio.create_task(ros_bridge.start())
+    # background_tasks.add(bridge_task)
+    
+    # ai_service_client = container.ai_service # 실제로는 AI 서버 클라이언트가 될 것입니다.
+    # video_task = asyncio.create_task(start_video_stream_receiver(host='0.0.0.0', port=54321, ai_service_client=ai_service_client))
+    # background_tasks.add(video_task)
+    
+    print("Communication servers are not started yet (TODO).")
+
+
+async def shutdown_event():
+    """애플리케이션 종료 시 모든 백그라운드 태스크를 취소하고 리소스를 정리합니다."""
+    for task in background_tasks:
+        task.cancel()
+    
+    await asyncio.gather(*background_tasks, return_exceptions=True)
+    print("Background servers stopped.")
+    
+    await Database.close()
+    print("Database pool closed.")
+
+
+# FastAPI 앱 인스턴스 생성
+app = FastAPI(
+    title="Office Robot Service API",
+    description="[v3.0] UI와 API가 통합된 오피스 로봇 서비스",
+    version="3.0.0",
+    on_startup=[startup_event],
+    on_shutdown=[shutdown_event]
+)
+
+# --- 정적 파일 마운트 ---
+app.mount("/static", StaticFiles(directory="server/web/static"), name="static")
+
+# --- API 및 웹 라우터 등록 ---
+from server.api.v1 import admin_routes, employee_routes, guest_routes
+from server.web import routes as web_router
+app.include_router(admin_routes.router)
+app.include_router(employee_routes.router)
+app.include_router(guest_routes.router)
+app.include_router(web_router.router) # 웹 UI 라우터 추가
+
+# --- WebSocket 엔드포인트 ---
+@app.websocket("/ws/admin/status")
+async def websocket_endpoint(websocket: WebSocket):
+    """관리자 페이지의 실시간 상태 업데이트를 위한 WebSocket 엔드포인트"""
+    await connection_manager.connect(websocket)
+    try:
+        while True:
+            # 현재는 클라이언트로부터 메시지를 받지 않고, 서버 푸시만 사용합니다.
+            # receive_text()는 연결 유지를 위해 필요하며, 클라이언트가 연결을 닫으면 예외를 발생시킵니다.
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        connection_manager.disconnect(websocket)
+
+
+@app.get("/")
+def read_root():
+    """API 서버의 상태를 확인하고 UI 링크를 제공하는 기본 엔드포인트"""
+    return {
+        "message": "Office Robot Service API is running!",
+        "admin_dashboard": "/web/admin",
+        "employee_app": "/web/employee",
+        "api_docs": "/docs"
+    }
+
+# uvicorn으로 이 앱을 실행하려면 터미널에서 다음 명령어를 사용하세요:
+# uvicorn server.app:app --reload
