@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+jinja2
+grpcio
+protobuf
+aiomysql
+pydantic
+python-dotenv

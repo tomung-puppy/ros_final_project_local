@@ -51,10 +51,8 @@ class Container:
         print("서비스 인스턴스 생성 및 의존성 주입...")
         
         # 1. Infrastructure Layer
-        db_session_factory = Database.get_session
-        
-        self.robot_repo: IRobotRepository = MySQLRobotRepository(db_session_factory)
-        self.task_repo: ITaskRepository = MySQLTaskRepository(db_session_factory)
+        self.robot_repo: IRobotRepository = MySQLRobotRepository()
+        self.task_repo: ITaskRepository = MySQLTaskRepository()
         self.robot_communicator: IRobotCommunicator = MockRobotCommunicator()
         self.connection_manager = connection_manager # WebSocket 관리자
 
