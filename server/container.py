@@ -17,7 +17,7 @@ from server.infrastructure.communication.protocols import IRobotCommunicator
 from server.infrastructure.communication.ros_bridge import MockRobotCommunicator
 
 # --- Core Service Instances ---
-from server.core_layer.ai_inference.inference_service import AIInferenceService
+from server.core_layer.ai_inference.grpc_inference_client import AIInferenceService
 from server.core_layer.office_iot.iot_controller import IoTController
 from server.core_layer.fleet_management.fleet_manager import FleetManager
 from server.core_layer.task_management.task_manager import TaskManager
