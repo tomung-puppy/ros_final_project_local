@@ -1,5 +1,5 @@
 import asyncio
-from server.common.protocols import IoTDevice, IoTCommand
+from main_server.common.protocols import IoTDevice, IoTCommand
 
 class IoTController:
     """

@@ -1,9 +1,9 @@
 from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, Depends, Body, HTTPException
 
-from server.domains.tasks.task import Task, TaskType
-from server.core_layer.task_management.task_manager import TaskManager
-from server.container import container
+from main_server.domains.tasks.task import Task, TaskType
+from main_server.core_layer.task_management.task_manager import TaskManager
+from main_server.container import container
 
 # --- 요청 본문 모델 ---
 from pydantic import BaseModel

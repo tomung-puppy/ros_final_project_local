@@ -8,10 +8,10 @@
 
 본 프로젝트는 다음과 같은 두 개의 주요 애플리케이션으로 구성된 **모노레포(Monorepo)** 구조를 가집니다.
 
--   **`server/`**: 메인 서버 애플리케이션. FastAPI로 구현되었으며, 시스템의 두뇌 역할을 하는 컨트롤 타워입니다.
+-   **`main_server/`**: 메인 서버 애플리케이션. FastAPI로 구현되었으며, 시스템의 두뇌 역할을 하는 컨트롤 타워입니다.
 -   **`robot/`**: 로봇 엣지 애플리케이션. ROS 2 패키지들로 구성되며, 실제 로봇 위에서 구동됩니다.
 
-## 2. 메인 서버 실행 방법 (`server/`)
+## 2. 메인 서버 실행 방법 (`main_server/`)
 
 ### 필수 환경
 - Python 3.8+
@@ -30,7 +30,7 @@
 ### 실행
 1.  프로젝트 루트 디렉토리에서 아래 명령어를 실행하여 메인 서버를 시작합니다.
     ```bash
-    uvicorn server.app:app --reload --host 0.0.0.0
+    uvicorn main_server.app:app --reload --host 0.0.0.0
   ```
 2.  서버가 시작되면 아래 주소로 접속하여 각 기능을 확인할 수 있습니다.
     - **관리자 대시보드**: `http://127.0.0.1:8000/web/admin`
@@ -38,10 +38,10 @@
     - **API 문서 (Swagger UI)**: `http://127.0.0.1:8000/docs`
 
 ### 실행 순서 (Startup Flow)
-1.  `server/app.py`가 실행됩니다.
+1.  `main_server/app.py`가 실행됩니다.
 2.  FastAPI `startup_event`가 트리거됩니다.
     1.  데이터베이스 연결 풀을 생성합니다.
-    2.  `server/container.py`를 통해 모든 서비스를 싱글턴으로 생성하고 의존성을 주입합니다.
+    2.  `main_server/container.py`를 통해 모든 서비스를 싱글턴으로 생성하고 의존성을 주입합니다.
     3.  **(TODO)** 로봇과의 통신을 담당할 `ROSBridge`와 `VideoStreamReceiver`가 백그라운드 태스크로 실행될 예정입니다. (현재는 비활성화)
 3.  API와 웹 UI 요청을 처리할 준비가 완료됩니다.
 
@@ -55,7 +55,7 @@
     -   `perception_node`: 센서 데이터 기반 장애물 인식 담당.
     -   `communication_node`: 메인 서버와의 통신 담당.
 
-### `server/`
+### `main_server/`
 -   `app.py`: FastAPI 애플리케이션의 메인 진입점.
 -   `container.py`: **(중요)** 의존성 주입(DI) 컨테이너. 애플리케이션의 모든 핵심 서비스를 관리하는 중앙 허브.
 -   `web/`: 웹 UI 관련 파일을 그룹화합니다.
@@ -184,16 +184,16 @@ AI 추론 서버는 다음 REST API 엔드포인트를 구현해야 합니다.
 ## 5. 다음 구현 단계 (상세 구현 로드맵)
 
 ### **1. 최적 로봇 배차 알고리즘 구체화 (Priority: 높음)**
--   **파일:** `server/core_layer/fleet_management/fleet_manager.py`
+-   **파일:** `main_server/core_layer/fleet_management/fleet_manager.py`
 -   **함수:** `find_optimal_robot(self, target_pose: tuple)`
 -   **구현할 내용:** 단순 직선 거리가 아닌, 실제 지도 기반 경로 거리, 작업 우선순위, 로봇 상태 가중치를 포함하는 종합 점수 모델을 설계하여 최적의 로봇을 선택하도록 알고리즘을 고도화합니다.
 
 ### **2. 실제 로봇 통신 로직 구현 (Priority: 높음)**
--   **파일:** `server/infrastructure/communication/ros_bridge.py`
+-   **파일:** `main_server/infrastructure/communication/ros_bridge.py`
 -   **클래스:** `MockRobotCommunicator`를 실제 `rosbridge_suite`와 연동하는 `RealRobotCommunicator` (가칭)로 교체합니다. 서버가 로봇의 상태 보고를 수신하고, 행동 명령 시퀀스를 전송하는 로직을 구현합니다.
 
 ### **3. AI 추론 서비스 연동 (Priority: 중간)**
--   **파일:** `server/core_layer/ai_inference/inference_service.py`
+-   **파일:** `main_server/core_layer/ai_inference/inference_service.py`
 -   **구현할 내용:** 현재 Mock 상태인 AI 서비스를, 실제 AI 추론 서버의 REST API (`B. AI 추론 서버 API` 명세 참고)를 호출하는 HTTP 클라이언트로 구현합니다.
--   **파일:** `server/infrastructure/communication/video_stream_receiver.py`
+-   **파일:** `main_server/infrastructure/communication/video_stream_receiver.py`
     -   AI 서버가 아닌 메인 서버에서 UDP 스트림을 받는다면, 수신한 데이터를 `AIInferenceService`로 전달하는 로직을 활성화합니다. (이상적으로는 이 로직은 AI 서버에 있어야 합니다.)

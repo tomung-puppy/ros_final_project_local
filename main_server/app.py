@@ -1,15 +1,16 @@
+from main_server import config
 import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 # --- DI 컨테이너 및 서비스 초기화 ---
-from server.container import container
-from server.infrastructure.database.connection import Database
-from server.web.connection_manager import manager as connection_manager
+from main_server.container import container
+from main_server.infrastructure.database.connection import Database
+from main_server.web.connection_manager import manager as connection_manager
 # TODO: 아래 주석 처리된 라인은 향후 ROS 브리지와 영상 스트림 수신기 구현 시 활성화됩니다.
-# from server.infrastructure.communication.ros_bridge import ROSBridge
-# from server.infrastructure.communication.video_stream_receiver import start_video_stream_receiver
+# from main_server.infrastructure.communication.ros_bridge import ROSBridge
+# from main_server.infrastructure.communication.video_stream_receiver import start_video_stream_receiver
 
 # .env 파일에서 환경 변수 로드
 load_dotenv()
@@ -30,12 +31,12 @@ async def startup_event():
 
     # 3. TODO: 통신 서버(ROS 브리지, 영상 수신기)를 백그라운드 태스크로 시작
     # 예시:
-    # ros_bridge = ROSBridge(host='0.0.0.0', port=9090, fleet_manager=container.fleet_manager)
+    # ros_bridge = ROSBridge(host=config.ROS_BRIDGE_HOST, port=config.ROS_BRIDGE_PORT, fleet_manager=container.fleet_manager)
     # bridge_task = asyncio.create_task(ros_bridge.start())
     # background_tasks.add(bridge_task)
     
     # ai_service_client = container.ai_service # 실제로는 AI 서버 클라이언트가 될 것입니다.
-    # video_task = asyncio.create_task(start_video_stream_receiver(host='0.0.0.0', port=54321, ai_service_client=ai_service_client))
+    # video_task = asyncio.create_task(start_video_stream_receiver(host=config.VIDEO_STREAM_HOST, port=config.VIDEO_STREAM_PORT, ai_service_client=ai_service_client))
     # background_tasks.add(video_task)
     
     print("Communication servers are not started yet (TODO).")
@@ -55,19 +56,19 @@ async def shutdown_event():
 
 # FastAPI 앱 인스턴스 생성
 app = FastAPI(
-    title="Office Robot Service API",
-    description="[v3.0] UI와 API가 통합된 오피스 로봇 서비스",
-    version="3.0.0",
+    title=config.APP_TITLE,
+    description=config.APP_DESCRIPTION,
+    version=config.APP_VERSION,
     on_startup=[startup_event],
     on_shutdown=[shutdown_event]
 )
 
 # --- 정적 파일 마운트 ---
-app.mount("/static", StaticFiles(directory="server/web/static"), name="static")
+app.mount("/static", StaticFiles(directory=config.STATIC_FILES_DIR), name="static")
 
 # --- API 및 웹 라우터 등록 ---
-from server.api.v1 import admin_routes, employee_routes, guest_routes
-from server.web import routes as web_router
+from main_server.api.v1 import admin_routes, employee_routes, guest_routes
+from main_server.web import routes as web_router
 app.include_router(admin_routes.router)
 app.include_router(employee_routes.router)
 app.include_router(guest_routes.router)
@@ -92,10 +93,10 @@ def read_root():
     """API 서버의 상태를 확인하고 UI 링크를 제공하는 기본 엔드포인트"""
     return {
         "message": "Office Robot Service API is running!",
-        "admin_dashboard": "/web/admin",
-        "employee_app": "/web/employee",
+        "admin_dashboard": config.ADMIN_DASHBOARD_PATH,
+        "employee_app": config.EMPLOYEE_APP_PATH,
         "api_docs": "/docs"
     }
 
 # uvicorn으로 이 앱을 실행하려면 터미널에서 다음 명령어를 사용하세요:
-# uvicorn server.app:app --reload
+# uvicorn main_server.app:app --reload

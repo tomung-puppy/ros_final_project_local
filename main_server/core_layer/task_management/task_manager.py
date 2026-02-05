@@ -1,9 +1,9 @@
 from typing import Dict, Any, Optional
 
-from server.domains.tasks.task import Task, TaskType, TaskStatus
-from server.domains.tasks.task_repository import ITaskRepository
-from server.core_layer.fleet_management.fleet_manager import FleetManager
-from server.common.exceptions import TaskAssignmentException
+from main_server.domains.tasks.task import Task, TaskType, TaskStatus
+from main_server.domains.tasks.task_repository import ITaskRepository
+from main_server.core_layer.fleet_management.fleet_manager import FleetManager
+from main_server.common.exceptions import TaskAssignmentException
 
 class TaskManager:
     """

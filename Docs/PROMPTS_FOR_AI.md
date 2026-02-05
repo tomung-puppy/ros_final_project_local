@@ -77,7 +77,7 @@ ROS 2 Jazzy와 rclpy(Python)를 사용하여 로봇의 `communication_node` 패�
 **목표:** 기존 관리자 대시보드 HTML 파일에 WebSocket을 이용한 실시간 로봇 상태 모니터링 기능을 추가합니다.
 
 ```text
-기존 `server/web/templates/admin_dashboard.html` 파일에 JavaScript 코드를 추가하여 WebSocket 기반의 동적인 관리자 대시보드를 만들어줘.
+기존 `main_server/web/templates/admin_dashboard.html` 파일에 JavaScript 코드를 추가하여 WebSocket 기반의 동적인 관리자 대시보드를 만들어줘.
 
 ### 주요 요구사항:
 1.  **WebSocket 연결**:
@@ -93,7 +93,7 @@ ROS 2 Jazzy와 rclpy(Python)를 사용하여 로봇의 `communication_node` 패�
     -   WebSocket 연결 시점에는 모든 로봇과 작업의 초기 상태가 필요해. `fetch` API를 사용하여 `/api/v1/admin/robots`와 `/api/v1/admin/tasks` 엔드포인트에서 초기 데이터를 가져와 화면에 표시해야 해.
 
 4.  **스타일링**:
-    -   `server/web/static/admin_style.css` 파일을 수정하여 대시보드가 깔끔하고 보기 좋게 만들어줘. 특히 로봇의 상태(IDLE, MOVING, ERROR 등)에 따라 시각적인 피드백(색상, 아이콘)을 다르게 표현해줘.
+    -   `main_server/web/static/admin_style.css` 파일을 수정하여 대시보드가 깔끔하고 보기 좋게 만들어줘. 특히 로봇의 상태(IDLE, MOVING, ERROR 등)에 따라 시각적인 피드백(색상, 아이콘)을 다르게 표현해줘.
 
 5.  **코드 위치**:
     -   모든 JavaScript 코드는 `<script>` 태그 안에 작성하고, 이 태그는 `admin_dashboard.html` 파일의 `<body>` 태그가 닫히기 직전에 위치시켜줘.
@@ -104,7 +104,7 @@ ROS 2 Jazzy와 rclpy(Python)를 사용하여 로봇의 `communication_node` 패�
 **목표:** 내부 직원이 간단하게 로봇에게 작업을 요청할 수 있는 UI를 개발합니다.
 
 ```text
-기존 `server/web/templates/employee_app.html` 파일에 JavaScript와 Form을 추가하여 작업 요청 기능을 구현해줘.
+기존 `main_server/web/templates/employee_app.html` 파일에 JavaScript와 Form을 추가하여 작업 요청 기능을 구현해줘.
 
 ### 주요 요구사항:
 1.  **입력 폼 (Form) 구현**:
@@ -127,15 +127,15 @@ ROS 2 Jazzy와 rclpy(Python)를 사용하여 로봇의 `communication_node` 패�
 **목표:** 메인 서버와 동일한 위치에 있는 MySQL 데이터베이스의 초기 테이블 스키마를 생성하는 SQL 스크립트를 작성합니다.
 
 ```text
-메인 서버의 `server/domains/` 디렉토리에 있는 Pydantic 모델들을 기반으로, MySQL 데이터베이스의 초기 테이블을 생성하는 SQL `CREATE TABLE` 스크립트를 작성해줘.
+메인 서버의 `main_server/domains/` 디렉토리에 있는 Pydantic 모델들을 기반으로, MySQL 데이터베이스의 초기 테이블을 생성하는 SQL `CREATE TABLE` 스크립트를 작성해줘.
 
 ### 주요 요구사항:
 1.  **`robots` 테이블**:
-    -   `server/domains/robots/robot.py`의 `Robot` 모델과 `RobotStatus` Enum을 참조해줘.
+    -   `main_server/domains/robots/robot.py`의 `Robot` 모델과 `RobotStatus` Enum을 참조해줘.
     -   `id` (VARCHAR, PK), `status` (ENUM 타입), `battery` (FLOAT) 등의 컬럼을 포함해야 해.
 
 2.  **`tasks` 테이블**:
-    -   `server/domains/tasks/task.py`의 `Task` 모델과 `TaskStatus`, `TaskType` Enum을 참조해줘.
+    -   `main_server/domains/tasks/task.py`의 `Task` 모델과 `TaskStatus`, `TaskType` Enum을 참조해줘.
     -   `id` (VARCHAR, PK), `status` (ENUM 타입), `task_type` (ENUM 타입), `details` (TEXT), `robot_id` (VARCHAR, FK) 등의 컬럼을 포함해야 해.
 
 3.  **공통 규칙**:

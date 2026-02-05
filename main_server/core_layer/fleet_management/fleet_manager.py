@@ -2,11 +2,11 @@ import math
 import json
 from typing import List, Optional, Dict, Any
 
-from server.domains.robots.robot import Robot, RobotStatus
-from server.domains.robots.robot_repository import IRobotRepository
-from server.domains.tasks.task import Task, TaskType
-from server.infrastructure.communication.protocols import IRobotCommunicator
-from server.web.connection_manager import ConnectionManager
+from main_server.domains.robots.robot import Robot, RobotStatus
+from main_server.domains.robots.robot_repository import IRobotRepository
+from main_server.domains.tasks.task import Task, TaskType
+from main_server.infrastructure.communication.protocols import IRobotCommunicator
+from main_server.web.connection_manager import ConnectionManager
 
 
 class FleetManager:

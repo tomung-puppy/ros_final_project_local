@@ -2,8 +2,8 @@ import grpc
 from typing import Dict, Any
 
 # Generated gRPC files
-from server.infrastructure.grpc import ai_inference_pb2
-from server.infrastructure.grpc import ai_inference_pb2_grpc
+from main_server.infrastructure.grpc import ai_inference_pb2
+from main_server.infrastructure.grpc import ai_inference_pb2_grpc
 
 class AIInferenceService:
     """

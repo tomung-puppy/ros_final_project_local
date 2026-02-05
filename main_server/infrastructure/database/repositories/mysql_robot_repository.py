@@ -1,8 +1,8 @@
 from typing import List, Optional, Dict, Any
 
-from server.domains.robots.robot import Robot, RobotStatus
-from server.domains.robots.robot_repository import IRobotRepository
-from server.infrastructure.database.base_repository import BaseRepository
+from main_server.domains.robots.robot import Robot, RobotStatus
+from main_server.domains.robots.robot_repository import IRobotRepository
+from main_server.infrastructure.database.base_repository import BaseRepository
 
 class MySQLRobotRepository(BaseRepository, IRobotRepository):
     """

@@ -2,25 +2,25 @@
 애플리케이션의 모든 주요 구성 요소(서비스, 리포지토리)를 중앙에서 관리하는
 의존성 주입(DI) 컨테이너입니다.
 """
-from server.infrastructure.database.connection import Database
-from server.web.connection_manager import manager as connection_manager
+from main_server.infrastructure.database.connection import Database
+from main_server.web.connection_manager import manager as connection_manager
 
 # --- Repository Instances ---
-from server.domains.robots.robot_repository import IRobotRepository
-from server.infrastructure.database.repositories.mysql_robot_repository import MySQLRobotRepository
+from main_server.domains.robots.robot_repository import IRobotRepository
+from main_server.infrastructure.database.repositories.mysql_robot_repository import MySQLRobotRepository
 
-from server.domains.tasks.task_repository import ITaskRepository
-from server.infrastructure.database.repositories.mysql_task_repository import MySQLTaskRepository
+from main_server.domains.tasks.task_repository import ITaskRepository
+from main_server.infrastructure.database.repositories.mysql_task_repository import MySQLTaskRepository
 
 # --- Communication Instances ---
-from server.infrastructure.communication.protocols import IRobotCommunicator
-from server.infrastructure.communication.ros_bridge import MockRobotCommunicator
+from main_server.infrastructure.communication.protocols import IRobotCommunicator
+from main_server.infrastructure.communication.ros_bridge import MockRobotCommunicator
 
 # --- Core Service Instances ---
-from server.core_layer.ai_inference.grpc_inference_client import AIInferenceService
-from server.core_layer.office_iot.iot_controller import IoTController
-from server.core_layer.fleet_management.fleet_manager import FleetManager
-from server.core_layer.task_management.task_manager import TaskManager
+from main_server.core_layer.ai_inference.grpc_inference_client import AIInferenceService
+from main_server.core_layer.office_iot.iot_controller import IoTController
+from main_server.core_layer.fleet_management.fleet_manager import FleetManager
+from main_server.core_layer.task_management.task_manager import TaskManager
 
 
 class Container:

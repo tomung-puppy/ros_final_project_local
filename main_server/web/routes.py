@@ -9,7 +9,7 @@ router = APIRouter(
 )
 
 # Jinja2 템플릿 설정
-templates = Jinja2Templates(directory="server/web/templates")
+templates = Jinja2Templates(directory="main_server/web/templates")
 
 
 @router.get("/web/admin", response_class=HTMLResponse)

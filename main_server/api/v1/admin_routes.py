@@ -1,9 +1,9 @@
 from typing import List
 from fastapi import APIRouter, Depends
 
-from server.domains.robots.robot import Robot
-from server.core_layer.fleet_management.fleet_manager import FleetManager
-from server.container import container
+from main_server.domains.robots.robot import Robot
+from main_server.core_layer.fleet_management.fleet_manager import FleetManager
+from main_server.container import container
 
 # FastAPI 라우터 생성
 router = APIRouter(
