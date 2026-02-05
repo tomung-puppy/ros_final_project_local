@@ -2,7 +2,6 @@ from main_server import config
 import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
-from dotenv import load_dotenv
 
 # --- DI 컨테이너 및 서비스 초기화 ---
 from main_server.container import container
@@ -11,9 +10,6 @@ from main_server.web.connection_manager import manager as connection_manager
 # TODO: 아래 주석 처리된 라인은 향후 ROS 브리지와 영상 스트림 수신기 구현 시 활성화됩니다.
 # from main_server.infrastructure.communication.ros_bridge import ROSBridge
 # from main_server.infrastructure.communication.video_stream_receiver import start_video_stream_receiver
-
-# .env 파일에서 환경 변수 로드
-load_dotenv()
 
 # 전역 변수로 백그라운드 태스크 저장
 background_tasks = set()

@@ -1,7 +1,7 @@
-import os
 import aiomysql
 from typing import Optional, AsyncGenerator
 from contextlib import asynccontextmanager
+from main_server import config
 
 class Database:
     _pool: Optional[aiomysql.Pool] = None
@@ -14,11 +14,11 @@ class Database:
         """
         if cls._pool is None:
             cls._pool = await aiomysql.create_pool(
-                host=os.getenv("DB_HOST", "localhost"),
-                port=int(os.getenv("DB_PORT", 3306)),
-                user=os.getenv("DB_USER", "root"),
-                password=os.getenv("DB_PASSWORD", ""),
-                db=os.getenv("DB_NAME", "office_robot_db"),
+                host=config.DB_HOST,
+                port=config.DB_PORT,
+                user=config.DB_USER,
+                password=config.DB_PASSWORD,
+                db=config.DB_NAME,
                 autocommit=False,
                 loop=None,  # aiomysql will use the current event loop
             )
