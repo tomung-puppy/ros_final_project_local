@@ -17,9 +17,11 @@ class IRobotCommunicator(Protocol):
         """
         ...
 
-    def listen_for_status(self):
+    def listen_for_status(self, callback: Any):
         """
         로봇으로부터 상태 업데이트를 비동기적으로 수신 대기합니다.
-        (구현 시 콜백이나 큐를 사용할 수 있음)
+        
+        Args:
+            callback (Callable): 상태 데이터를 수신했을 때 호출할 함수.
         """
         ...

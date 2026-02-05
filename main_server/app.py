@@ -8,7 +8,7 @@ from main_server.container import container
 from main_server.infrastructure.database.connection import Database
 from main_server.web.connection_manager import manager as connection_manager
 # TODO: 아래 주석 처리된 라인은 향후 ROS 브리지와 영상 스트림 수신기 구현 시 활성화됩니다.
-# from main_server.infrastructure.communication.ros_bridge import ROSBridge
+from main_server.infrastructure.communication.ros_bridge import ROSBridge
 # from main_server.infrastructure.communication.video_stream_receiver import start_video_stream_receiver
 
 # 전역 변수로 백그라운드 태스크 저장
@@ -25,17 +25,15 @@ async def startup_event():
     container.services()
     print("DI container and services initialized.")
 
-    # 3. TODO: 통신 서버(ROS 브리지, 영상 수신기)를 백그라운드 태스크로 시작
-    # 예시:
-    # ros_bridge = ROSBridge(host=config.ROS_BRIDGE_HOST, port=config.ROS_BRIDGE_PORT, fleet_manager=container.fleet_manager)
-    # bridge_task = asyncio.create_task(ros_bridge.start())
-    # background_tasks.add(bridge_task)
+    # 3. 통신 서버(ROS 브리지)를 백그라운드 태스크로 시작
+    ros_bridge = ROSBridge(host=config.ROS_BRIDGE_HOST, port=config.ROS_BRIDGE_PORT, fleet_manager=container.fleet_manager)
+    bridge_task = asyncio.create_task(ros_bridge.start())
+    background_tasks.add(bridge_task)
     
-    # ai_service_client = container.ai_service # 실제로는 AI 서버 클라이언트가 될 것입니다.
     # video_task = asyncio.create_task(start_video_stream_receiver(host=config.VIDEO_STREAM_HOST, port=config.VIDEO_STREAM_PORT, ai_service_client=ai_service_client))
     # background_tasks.add(video_task)
     
-    print("Communication servers are not started yet (TODO).")
+    print("ROS Bridge server started.")
 
 
 async def shutdown_event():

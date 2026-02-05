@@ -6,3 +6,4 @@ protobuf
 aiomysql
 pydantic
 python-dotenv
+roslibpy

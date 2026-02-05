@@ -14,7 +14,7 @@ from main_server.infrastructure.database.repositories.mysql_task_repository impo
 
 # --- Communication Instances ---
 from main_server.infrastructure.communication.protocols import IRobotCommunicator
-from main_server.infrastructure.communication.ros_bridge import MockRobotCommunicator
+from main_server.infrastructure.communication.ros_bridge import ROSBridgeCommunicator
 
 # --- Core Service Instances ---
 from main_server.core_layer.ai_inference.grpc_inference_client import AIInferenceService
@@ -53,7 +53,7 @@ class Container:
         # 1. Infrastructure Layer
         self.robot_repo: IRobotRepository = MySQLRobotRepository()
         self.task_repo: ITaskRepository = MySQLTaskRepository()
-        self.robot_communicator: IRobotCommunicator = MockRobotCommunicator()
+        self.robot_communicator: IRobotCommunicator = ROSBridgeCommunicator()
         self.connection_manager = connection_manager # WebSocket 관리자
 
         # 2. Core Layer
