@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import ai_inference_pb2 as ai__inference__pb2
+from main_server.infrastructure.grpc import ai_inference_pb2 as main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2
 
 GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in ai_inference_pb2_grpc.py depends on'
+        + ' but the generated code in main_server/infrastructure/grpc/ai_inference_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -37,13 +37,18 @@ class AIInferenceStub(object):
         """
         self.DetectObjects = channel.unary_unary(
                 '/ai_inference.AIInference/DetectObjects',
-                request_serializer=ai__inference__pb2.ImageRequest.SerializeToString,
-                response_deserializer=ai__inference__pb2.ObjectDetectionResponse.FromString,
+                request_serializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ImageRequest.SerializeToString,
+                response_deserializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ObjectDetectionResponse.FromString,
                 _registered_method=True)
         self.RecognizeFaces = channel.unary_unary(
                 '/ai_inference.AIInference/RecognizeFaces',
-                request_serializer=ai__inference__pb2.ImageRequest.SerializeToString,
-                response_deserializer=ai__inference__pb2.FaceRecognitionResponse.FromString,
+                request_serializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ImageRequest.SerializeToString,
+                response_deserializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.FaceRecognitionResponse.FromString,
+                _registered_method=True)
+        self.StreamInferenceResults = channel.unary_stream(
+                '/ai_inference.AIInference/StreamInferenceResults',
+                request_serializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.Empty.SerializeToString,
+                response_deserializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.InferenceResult.FromString,
                 _registered_method=True)
 
 
@@ -52,7 +57,8 @@ class AIInferenceServicer(object):
     """
 
     def DetectObjects(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """1:1 요청-응답 방식 (기존)
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -63,18 +69,31 @@ class AIInferenceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def StreamInferenceResults(self, request, context):
+        """서버 스트리밍 방식 (실시간 구독)
+        서버에서 추론 결과가 발생할 때마다 클라이언트에게 스트림으로 전달합니다.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AIInferenceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'DetectObjects': grpc.unary_unary_rpc_method_handler(
                     servicer.DetectObjects,
-                    request_deserializer=ai__inference__pb2.ImageRequest.FromString,
-                    response_serializer=ai__inference__pb2.ObjectDetectionResponse.SerializeToString,
+                    request_deserializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ImageRequest.FromString,
+                    response_serializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ObjectDetectionResponse.SerializeToString,
             ),
             'RecognizeFaces': grpc.unary_unary_rpc_method_handler(
                     servicer.RecognizeFaces,
-                    request_deserializer=ai__inference__pb2.ImageRequest.FromString,
-                    response_serializer=ai__inference__pb2.FaceRecognitionResponse.SerializeToString,
+                    request_deserializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ImageRequest.FromString,
+                    response_serializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.FaceRecognitionResponse.SerializeToString,
+            ),
+            'StreamInferenceResults': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamInferenceResults,
+                    request_deserializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.Empty.FromString,
+                    response_serializer=main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.InferenceResult.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -103,8 +122,8 @@ class AIInference(object):
             request,
             target,
             '/ai_inference.AIInference/DetectObjects',
-            ai__inference__pb2.ImageRequest.SerializeToString,
-            ai__inference__pb2.ObjectDetectionResponse.FromString,
+            main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ImageRequest.SerializeToString,
+            main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ObjectDetectionResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -130,8 +149,35 @@ class AIInference(object):
             request,
             target,
             '/ai_inference.AIInference/RecognizeFaces',
-            ai__inference__pb2.ImageRequest.SerializeToString,
-            ai__inference__pb2.FaceRecognitionResponse.FromString,
+            main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.ImageRequest.SerializeToString,
+            main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.FaceRecognitionResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def StreamInferenceResults(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/ai_inference.AIInference/StreamInferenceResults',
+            main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.Empty.SerializeToString,
+            main__server_dot_infrastructure_dot_grpc_dot_ai__inference__pb2.InferenceResult.FromString,
             options,
             channel_credentials,
             insecure,

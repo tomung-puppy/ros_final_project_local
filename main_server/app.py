@@ -7,9 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from main_server.container import container
 from main_server.infrastructure.database.connection import Database
 from main_server.web.connection_manager import manager as connection_manager
-# TODO: 아래 주석 처리된 라인은 향후 ROS 브리지와 영상 스트림 수신기 구현 시 활성화됩니다.
 from main_server.infrastructure.communication.ros_bridge import ROSBridge
-# from main_server.infrastructure.communication.video_stream_receiver import start_video_stream_receiver
 
 # 전역 변수로 백그라운드 태스크 저장
 background_tasks = set()
@@ -29,11 +27,12 @@ async def startup_event():
     ros_bridge = ROSBridge(host=config.ROS_BRIDGE_HOST, port=config.ROS_BRIDGE_PORT, fleet_manager=container.fleet_manager)
     bridge_task = asyncio.create_task(ros_bridge.start())
     background_tasks.add(bridge_task)
+
+    # 4. AI 실시간 추론 결과 구독 시작
+    ai_stream_task = asyncio.create_task(container.fleet_manager.start_ai_stream())
+    background_tasks.add(ai_stream_task)
     
-    # video_task = asyncio.create_task(start_video_stream_receiver(host=config.VIDEO_STREAM_HOST, port=config.VIDEO_STREAM_PORT, ai_service_client=ai_service_client))
-    # background_tasks.add(video_task)
-    
-    print("ROS Bridge server started.")
+    print("ROS Bridge server and AI Stream subscriber started.")
 
 
 async def shutdown_event():

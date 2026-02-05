@@ -5,6 +5,20 @@ from typing import ClassVar as _ClassVar, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
+class Empty(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class InferenceResult(_message.Message):
+    __slots__ = ("robot_id", "object_detection", "face_recognition")
+    ROBOT_ID_FIELD_NUMBER: _ClassVar[int]
+    OBJECT_DETECTION_FIELD_NUMBER: _ClassVar[int]
+    FACE_RECOGNITION_FIELD_NUMBER: _ClassVar[int]
+    robot_id: str
+    object_detection: ObjectDetectionResponse
+    face_recognition: FaceRecognitionResponse
+    def __init__(self, robot_id: _Optional[str] = ..., object_detection: _Optional[_Union[ObjectDetectionResponse, _Mapping]] = ..., face_recognition: _Optional[_Union[FaceRecognitionResponse, _Mapping]] = ...) -> None: ...
+
 class ImageRequest(_message.Message):
     __slots__ = ("image_id",)
     IMAGE_ID_FIELD_NUMBER: _ClassVar[int]

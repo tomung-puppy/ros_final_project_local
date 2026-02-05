@@ -4,8 +4,25 @@ package ai_inference;
 
 // 서비스 정의
 service AIInference {
+  // 1:1 요청-응답 방식 (기존)
   rpc DetectObjects (ImageRequest) returns (ObjectDetectionResponse);
   rpc RecognizeFaces (ImageRequest) returns (FaceRecognitionResponse);
+
+  // 서버 스트리밍 방식 (실시간 구독)
+  // 서버에서 추론 결과가 발생할 때마다 클라이언트에게 스트림으로 전달합니다.
+  rpc StreamInferenceResults (Empty) returns (stream InferenceResult);
+}
+
+// 빈 요청 메시지
+message Empty {}
+
+// 통합 추론 결과 메시지 (스트리밍용)
+message InferenceResult {
+  string robot_id = 1;
+  oneof result {
+    ObjectDetectionResponse object_detection = 2;
+    FaceRecognitionResponse face_recognition = 3;
+  }
 }
 
 // 공통 이미지 데이터 요청 메시지

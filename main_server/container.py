@@ -63,6 +63,7 @@ class Container:
         self.fleet_manager = FleetManager(
             robot_repo=self.robot_repo,
             robot_communicator=self.robot_communicator,
+            ai_service=self.ai_service,
             connection_manager=self.connection_manager
         )
         self.task_manager = TaskManager(
